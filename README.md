@@ -523,7 +523,7 @@ redis-server /path/to/sentinel.conf --sentinel
 ```
 
 哨兵监控一个系统时，只需要配置监控master即可，哨兵会自动发现所有slave。  
-这时候，我们把master关闭，等待指定时间后(默认是30秒)，会自动进行切换，会输出如下消息：   
+这时候，我们把master关闭，等待指定时间后(默认是30秒)，会自动进行切换，输出包括如下消息：   
 ```
 +sdown表示哨兵主管认为master已经停止服务了。
 +odown表示哨兵客观认为master停止服务了。
