@@ -1,6 +1,6 @@
 # Redis-practice  
   
-## Redis数据结构、原理分析  
+## Redis数据结构、原理分析、应用实战  
   
 ### 什么是Redis  
   
@@ -14,7 +14,7 @@ Redis(remote dictionary server)是一个基于KEY-VALUE的高性能的存储系�
 ### 存储结构  
   
 大家一定对字典类型的数据结构非常熟悉，比如map ，通过key value的方式存储的结构。redis的全称是remote dictionary server(远程字典服务器)，它以字典结构存储数据，并允许其他应用通过TCP协议读写字典中的内容。数据结构如下  
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84.jpeg)  
   
 ### Redis的安装  
 redis约定次版本号(第一个小数点后的数字)为偶数版本是稳定版，如2.8、3.0，奇数版本为非稳定版，生产环境需要使用稳定版；本文使用3.2版本。  
@@ -71,23 +71,23 @@ char buf[];//sds实际存放的位置
 }
 ```
 sdshdr8的内存布局  
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/String%E7%BB%93%E6%9E%84.jpeg)  
   
 
 #### 列表类型  
 列表类型(list)可以存储一个有序的字符串列表，常用的操作是向列表两端添加元素或者获得列表的某一个片段。  
 列表类型内部使用双向链表实现，所以向列表两端添加元素的时间复杂度为O(1), 获取越接近两端的元素速度就越快。这意味着即使是一个有几千万个元素的列表，获取头部或尾部的10条记录也是很快的。  
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/List%E7%BB%93%E6%9E%84.jpeg)  
   
 数据结构  
 redis3.2之前，List类型的value对象内部以linkedlist或者ziplist来实现, 当list的元素个数和单个元素的长度比较小的时候，Redis会采用ziplist(压缩列表)来实现来减少内存占用。否则就会采用linkedlist(双向链表)结构。  
 redis3.2之后，采用的一种叫quicklist的数据结构来存储list，列表的底层都由quicklist实现。    
 这两种存储方式都有优缺点，双向链表在链表两端进行push和pop操作，在插入节点上复杂度比较低，但是内存开销比较大；ziplist存储在一段连续的内存上，所以存储效率很高，但是插入和删除都需要频繁申请和释放内存；  
 quicklist仍然是一个双向链表，只是列表的每个节点都是一个ziplist，其实就是linkedlist和ziplist的结合，quicklist 中每个节点ziplist都能够存储多个数据元素，在源码中的文件为【quicklist.c】，在源码第一行中有解释为:A doubly linked list of ziplists意思为一个由ziplist组成的双向链表;
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/List%E5%86%85%E9%83%A8%E7%BB%93%E6%9E%84.jpeg)  
   
 #### hash类型  
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/Hash%E7%BB%93%E6%9E%84.jpeg)  
   
 数据结构  
 map提供两种结构来存储，一种是hashtable、另一种是前面讲的ziplist，数据量小的时候用ziplist。在redis中，哈希表分为三层(源码地址【dict.h】)，分别是：  
@@ -131,20 +131,20 @@ long rehashidx; //当前rehash到buckets的哪个索引，-1时表示非rehash�
 #### 集合类型  
 集合类型中，每个元素都是不同的，也就是不能有重复数据，同时集合类型中的数据是无序的。一个集合类型键可以存储至多232-1个 。集合类型和列表类型的最大的区别是有序性和唯一性。  
 集合类型的常用操作是向集合中加入或删除元素、判断某个元素是否存在。由于集合类型在redis内部是使用的值为空的散列表(hash table)，所以这些操作的时间复杂度都是O(1)。  
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/Set%E7%B1%BB%E5%9E%8B.jpeg)  
   
 数据结构  
 Set在的底层数据结构以intset或者hashtable来存储。当set中只包含整数型的元素时，采用intset来存储，否则，采用hashtable存储，但是对于set来说，该hashtable的value值用于为NULL，通过key来存储元素。 
   
 #### 有序集合  
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88%E7%BB%93%E6%9E%84.jpeg)  
   
 有序集合类型，顾名思义，和前面讲的集合类型的区别就是多了有序的功能。  
 在集合类型的基础上，有序集合类型为集合中的每个元素都关联了一个分数，这使得我们不仅可以完成插入、删除和判断元素是否存在等集合类型支持的操作，还能获得分数最高(或最低)的前N个元素、获得指定分数范围内的元素等与分数有关的操作。虽然集合中每个元素都是不同的，但是他们的分数却可以相同。
   
 数据结构  
 zset类型的数据结构就比较复杂一点，内部是以ziplist或者skiplist+hashtable来实现，这里面最核心的一个结构就是skiplist，也就是跳跃表。
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88%E5%86%85%E9%83%A8%E7%BB%93%E6%9E%84.jpeg)  
   
 ### Redis的原理分析  
   
@@ -203,7 +203,7 @@ SUBSCRIBE channel [channel ...]
 结构图  
 channel分两类，一个是普通channel、另一个是pattern channel(规则匹配)， producer1发布了一条消息 【publish abc hello】,redis server发给abc这个普通channel上的所有订阅者，同时abc也匹配上了pattern channel的名字，所以这条消息也会同时发送给pattern channel *bc上的所有订阅者。  
 
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E7%BB%93%E6%9E%84%E5%9B%BE.jpeg)  
   
 #### Redis的数据持久化  
 Redis支持两种方式的持久化，一种是RDB方式、另一种是AOF(append-only-file)方式。前者会根据指定的规则“定时”将内存中的数据存储在硬盘上，而后者在每次执行命令后将命令本身记录下来。两种持久化方式可以单独使用其中一种，也可以将这两种方式结合使用。  
@@ -371,7 +371,7 @@ evalsha "a5a402e90df3eaeca2ff03d56d99982e05cf6574" 0
 #### 主从复制  
 复制的作用是把redis的数据库复制多个副本部署在不同的服务器上，如果其中一台服务器出现故障，也能快速迁移到其他服务器上提供服务。复制功能可以实现当一台redis服务器的数据更新后，自动将新的数据同步到其他服务器上。  
 主从复制就是我们常见的master/slave模式，主数据库可以进行读写操作，当写操作导致数据发生变化时会自动将数据同步给从数据库。而一般情况下，从数据库是只读的，并接收主数据库同步过来的数据。一个主数据库可以有多个从数据库。  
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/%E4%B8%BB%E4%BB%8E.jpeg)  
   
 配置  
 在redis中配置master/slave是非常容易的，只需要在从数据库的配置文件中加入slaveof 主数据库地址端口。 而 master 数据库不需要做任何改变。
@@ -385,7 +385,7 @@ evalsha "a5a402e90df3eaeca2ff03d56d99982e05cf6574" 0
 
 全量复制  
 Redis全量复制一般发生在Slave初始化阶段，这时Slave需要将Master上的所有数据都复制一份。具体步骤  
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/%E5%85%A8%E9%87%8F%E5%A4%8D%E5%88%B6.jpeg)  
   
 完成上面几个步骤后就完成了slave服务器数据初始化的所有操作，savle服务器此时可以接收来自用户的读请求。  
 master/slave 复制策略是采用乐观复制，也就是说可以容忍在一定时间内master/slave数据的内容是不同的，但是两者的数据会最终同步。具体来说，redis的主从同步过程本身是异步的，意味着master执行完客户端请求的命令后会立即返回结果给客户端，然后异步的方式把命令同步给slave。  
@@ -419,10 +419,10 @@ master** rdb slave
 2.master出现故障时自动将slave数据库升级为master。  
   
 哨兵是一个独立的进程，使用哨兵后的架构图  
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/%E5%93%A8%E5%85%B5.jpeg)  
   
 为了解决master选举问题，又引出了一个单点问题，也就是哨兵的可用性如何解决，在一个一主多从的Redis系统中，可以使用多个哨兵进行监控任务以保证系统足够稳定。此时哨兵不仅会监控master和slave，同时还会互相监控。这种方式称为哨兵集群，哨兵集群需要解决故障发现、和master决策的协商机制问题。  
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/%E5%93%A8%E5%85%B5%E9%9B%86%E7%BE%A4.jpeg)  
   
 sentinel之间的相互感知  
 sentinel节点之间会因为共同监视同一个master从而产生了关联，一个新加入的sentinel节点需要和其他监视相同master节点的sentinel相互感知，首先  
@@ -430,7 +430,7 @@ sentinel节点之间会因为共同监视同一个master从而产生了关联，
 2.新加入的sentinel节点向这个channel发布一条消息，包含自己本身的信息，这样订阅了这个channel的sentinel 就可以发现这个新的sentinel。  
 3.新加入得sentinel和其他sentinel节点建立长连接。  
   
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/%E5%93%A8%E5%85%B5%E6%84%9F%E7%9F%A5.jpeg)  
   
 master的故障发现  
 sentinel节点会定期向master节点发送心跳包来判断存活状态，一旦master节点没有正确响应，sentinel会把 master设置为“主观不可用状态”，然后它会把“主观不可用”发送给其他所有的sentinel节点去确认，当确认的 sentinel节点数大于>quorum时，则会认为master是“客观不可用”，接着就开始进入选举新的master流程。但是这里又会遇到一个问题，就是sentinel中，本身是一个集群，如果多个节点同时发现master节点达到客观不可用状态，那谁来决策选择哪个节点作为maste呢？这个时候就需要从sentinel集群中选择一个leader来做决策。而这里用到了一致性算法Raft算法，此算法是分布式一致性算法。基于投票，只要保证过半数节点通过提议即可；  
@@ -481,7 +481,7 @@ Redis的数据分区
 分布式数据库首要解决把整个数据集按照分区规则映射到多个节点的问题，即把数据集划分到多个节点上，每个节点负责整个数据的一个子集。Redis Cluster采用哈希分区规则，采用虚拟槽分区。  
 虚拟槽分区巧妙地使用了哈希空间，使用分散度良好的哈希函数把所有的数据映射到一个固定范围内的整数集合，整数定义为槽(slot)。比如Redis Cluster槽的范围是0 ~ 16383。槽是集群内数据管理和迁移的基本单位。采用大范围的槽的主要目的是为了方便数据的拆分和集群的扩展，每个节点负责一定数量的槽。  
 计算公式:slot = CRC16(key)%16383。每一个节点负责维护一部分槽以及槽所映射的键值数据。  
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/%E5%88%86%E7%89%87.jpeg)  
   
 HashTags  
 通过分片手段，可以将数据合理的划分到不同的节点上，这本来是一件好事。但是有的时候，我们希望对相关联的业务以原子方式进行操作。举个简单的例子：  
@@ -524,7 +524,7 @@ Redis Cluster并不会代理查询，那么如果客户端访问了一个key并�
   
 槽迁移的过程  
 槽迁移的过程中有一个不稳定状态，这个不稳定状态会有一些规则，这些规则定义客户端的行为，从而使得Redis Cluster不必宕机的情况下可以执行槽的迁移。下面这张图描述了我们迁移编号为1、2、3的槽的过程中，他们在 MasterA节点和MasterB节点中的状态。  
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/%E8%BF%81%E7%A7%BB.jpeg)  
   
 简单的工作流程  
 >1.向MasterB发送状态变更命令，吧Master B对应的slot状态设置为IMPORTING。  
@@ -689,13 +689,13 @@ System.out.println("获取锁成功"); }
   
 原理分析  
 trylock  
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/tryLock.jpeg)  
   
 tryAcquire  
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/tryAcquire.jpeg)  
   
 tryLockInnerAsync  
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/tryLockInnerAsync.jpeg)  
   
 通过lua脚本来实现加锁的操作  
 >1.判断lock键是否存在，不存在直接调用hset存储当前线程信息并且设置过期时间,返回nil，告诉客户端直接获取到锁。  
@@ -703,7 +703,7 @@ tryLockInnerAsync
 3.被其它线程已经锁定，返回锁有效期的剩余时间，告诉客户端需要等待。  
   
 unlock
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/unLock.jpeg)  
   
 1.如果lock键不存在，发消息说锁已经可用，发送一个消息。  
 2.如果锁不是被当前线程锁定，则返回nil。  
@@ -726,7 +726,7 @@ pipeline.sync();
   
 ### Redis的应用架构  
 对于读多写少的高并发场景，我们会经常使用缓存来进行优化。比如说支付宝的余额展示功能，实际上99%的时候都是查询，1%的请求是变更。所以，我们在这样的场景下，可 以加入缓存，用户->余额  
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/%E5%BA%94%E7%94%A8%E6%9E%B6%E6%9E%84.jpeg)  
   
 #### Redis缓存与数据一致性问题  
 那么基于上面的这个出发点，问题就来了，当用户的余额发生变化的时候，如何更新缓存中的数据，也就是说。  
@@ -748,7 +748,7 @@ pipeline.sync();
 更新数据库和更新缓存这两个操作，是无法保证原子性的，所以我们需要根据当前业务的场景的容忍性来选择。也就是如果出现不一致的情况下，哪一种更新方式对业务的影响最小，就先执行影响最小的方案。
   
 最终一致性的解决方案  
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/%E7%BC%93%E5%AD%98%E4%B8%80%E8%87%B4.jpeg)  
   
 #### 缓存雪崩与缓存穿透  
 当缓存大规模渗透在整个架构中以后，那么缓存本身的可用性讲决定整个架构的稳定性。  
@@ -781,11 +781,11 @@ bitmap
 布隆过滤器原理  
 有了对位图的理解以后，我们对布隆过滤器的原理理解就会更容易了，仍然以前面提到的40亿数据为案例，假设这40亿数据为某邮件服务器的黑名单数据，邮件服务需要根据邮箱地址来判断当前邮箱是否属于垃圾邮件。原理如下  
 假设集合里面有3个元素{x, y, z}，哈希函数的个数为3。首先将位数组进行初始化，将里面每个位都设置位0。对于 集合里面的每一个元素，将元素依次通过3个哈希函数进行映射，每次映射都会产生一个哈希值，这个值对应位数 组上面的一个点，然后将位数组对应的位置标记为1。查询W元素是否存在集合中的时候，同样的方法将W通过哈希映射到位数组上的3个点。如果3个点的其中有一个点不为1，则可以判断该元素一定不存在集合中。反之，如果 3个点都为1，则该元素可能存在集合中。
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8%E5%8E%9F%E7%90%86.jpeg)  
   
 接下来按照该方法处理所有的输入对象，每个对象都可能把bitMap中一些白位置涂黑，也可能会遇到已经涂黑的位置，遇到已经为黑的让他继续为黑即可。处理完所有的输入对象之后，在bitMap中可能已经有相当多的位置已经被涂黑。至此，一个布隆过滤器生成完成，这个布隆过滤器代表之前所有输入对象组成的集合。  
 如何去判断一个元素是否存在bit array中呢? 原理是一样，根据k个哈希函数去得到的结果，如果所有的结果都是 1，表示这个元素可能(假设某个元素通过映射对应下标为4，5，6这3个点。虽然这3个点都为1，但是很明显这3个点是不同元素经过哈希得到的位置，因此这种情况说明元素虽然不在集合中，也可能对应的都是1)存在。如果一旦发现其中一个比特位的元素是0，表示这个元素一定不存在。  
 至于k个哈希函数的取值为多少，能够最大化的降低错误率(因为哈希函数越多，映射冲突会越少)，这个地方就 会涉及到最优的哈希函数个数的一个算法逻辑。  
-![]()  
+![](https://github.com/YufeizhangRay/image/blob/master/Redis/%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8%E5%BA%94%E7%94%A8.jpeg)  
 
  
